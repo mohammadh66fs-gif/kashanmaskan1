@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سامانه مشاور املاک</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:Vazirmatn,Tahoma,sans-serif; }
+  body { background:#f1f5f9; color:#1e293b; min-height:100vh; }
+  header { background:#0f766e; color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  header h1 { font-size:1.2rem; }
+  .container { max-width:1100px; margin:0 auto; padding:16px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:16px; }
+  .stat { background:#fff; border-radius:12px; padding:14px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+  .stat b { display:block; font-size:1.6rem; color:#0f766e; }
+  .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .tabs button { padding:10px 18px; border:none; border-radius:10px; background:#fff; cursor:pointer; font-size:.95rem; font-weight:bold; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+  .tabs button.active { background:#0f766e; color:#fff; }
+  .card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 1px 5px rgba(0,0,0,.08); margin-bottom:16px; }
+  .card h2 { font-size:1.05rem; color:#0f766e; margin-bottom:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  label { font-size:.85rem; color:#475569; display:block; margin-bottom:4px; }
+  input, select, textarea { width:100%; padding:9px 12px; border:1px solid #cbd5e1; border-radius:9px; font-size:.95rem; background:#f8fafc; }
+  input:focus, select:focus, textarea:focus { outline:2px solid #0f766e55; }
+  .btn { background:#0f766e; color:#fff; border:none; padding:11px 22px; border-radius:10px; cursor:pointer; font-size:.95rem; font-weight:bold; margin-top:12px; }
+  .btn.red { background:#dc2626; padding:6px 12px; margin:0; font-size:.8rem; }
+  .btn.gray { background:#64748b; padding:6px 12px; margin:0 0 0 6px; font-size:.8rem; }
+  .item { border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:10px; background:#fafafa; }
+  .item .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+  .item h3 { font-size:1rem; }
+  .badge { padding:4px 10px; border-radius:99px; font-size:.75rem; font-weight:bold; }
+  .b-new{background:#dbeafe;color:#1d4ed8} .b-call{background:#fef3c7;color:#b45309} .b-visit{background:#e0e7ff;color:#4338ca} .b-deal{background:#dcfce7;color:#15803d} .b-done{background:#f1f5f9;color:#475569}
+  .meta { font-size:.85rem; color:#64748b; margin-top:6px; line-height:1.8; }
+  a.phone { color:#0f766e; font-weight:bold; text-decoration:none; border-bottom:1px dashed #0f766e; }
+  .feat { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .feat button { border:1.5px solid #cbd5e1; background:#fff; border-radius:99px; padding:7px 14px; font-size:.85rem; cursor:pointer; font-weight:bold; }
+  .feat button.on { background:#dcfce7; border-color:#16a34a; color:#15803d; }
+  .feat button.off { background:#fee2e2; border-color:#dc2626; color:#b91c1c; }
+  .feat-view span { display:inline-block; margin-inline-end:10px; font-weight:bold; }
+  .yes { color:#15803d; } .no { color:#dc2626; }
+  .followup { margin-top:8px; padding:8px 12px; border-radius:9px; font-size:.85rem; }
+  .fu-today { background:#fee2e2; color:#b91c1c; font-weight:bold; }
+  .fu-late { background:#fde68a; color:#92400e; font-weight:bold; }
+  .fu-ok { background:#ecfdf5; color:#047857; }
+  .searchbar { width:100%; padding:11px 14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom:14px; font-size:.95rem; }
+  .empty { text-align:center; color:#94a3b8; padding:30px; }
+  @media(max-width:600px){ .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏡 سامانه پیگیری مشاور املاک</h1>
+  <div id="todayDate" style="font-size:.85rem"></div>
+</header>
+
+<div class="container">
+  <div class="stats">
+    <div class="stat"><b id="stClients">۰</b>مشتری فعال</div>
+    <div class="stat"><b id="stFiles">۰</b>فایل ملکی</div>
+    <div class="stat"><b id="stToday">۰</b>پیگیری امروز</div>
+    <div class="stat"><b id="stLate">۰</b>پیگیری عقب‌افتاده</div>
+  </div>
+
+  <div class="tabs">
+    <button class="active" onclick="showTab('clients',this)">👥 مشتری‌ها</button>
+    <button onclick="showTab('files',this)">🏠 فایل‌های ملکی</button>
+    <button onclick="showTab('followups',this)">📌 پیگیری‌های امروز</button>
+  </div>
+
+  <!-- مشتری‌ها -->
+  <div id="tab-clients">
+    <div class="card">
+      <h2>ثبت مشتری جدید</h2>
+      <div class="grid">
+        <div><label>نام و نام خانوادگی *</label><input id="cName" placeholder="مثلاً: علی محمدی"></div>
+        <div><label>شماره تماس *</label><input id="cPhone" inputmode="tel" placeholder="۰۹۱۲..."></div>
+        <div><label>نوع درخواست</label><select id="cType"><option>خرید</option><option>اجاره</option><option>فروش / رهن</option><option>مشارکت</option></select></div>
+        <div><label>بودجه (تومان)</label><input id="cBudget" placeholder="مثلاً: ۴ میلیارد"></div>
+        <div><label>منطقه / محله</label><input id="cArea" placeholder="مثلاً: سعادت‌آباد"></div>
+        <div><label>وضعیت</label><select id="cStatus">
+          <option value="new">مشتری جدید</option>
+          <option value="call">تماس اولیه</option>
+          <option value="visit">سر زدن / بازدید</option>
+          <option value="deal">در حال قرارداد</option>
+          <option value="done">تکمیل شد</option>
+        </select></div>
+        <div><label>تاریخ پیگیری بعدی *</label><input type="date" id="cFollowup"></div>
+        <div style="grid-column:1/-1"><label>توضیحات</label><textarea id="cNote" rows="2" placeholder="جزئیات درخواست مشتری..."></textarea></div>
+      </div>
+      <button class="btn" onclick="addClient()">➕ ثبت مشتری</button>
+    </div>
+    <input class="searchbar" id="cSearch" placeholder="🔍 جستجوی نام، شماره، محله..." oninput="renderClients()">
+    <div id="clientList"></div>
+  </div>
+
+  <!-- فایل‌ها -->
+  <div id="tab-files" style="display:none">
+    <div class="card">
+      <h2>ثبت فایل ملکی جدید</h2>
+      <div class="grid">
+        <div><label>عنوان / کد فایل *</label><input id="fTitle" placeholder="مثلاً: آپارتمان ۸۰ متری فاز ۲"></div>
+        <div><label>منطقه / محله</label><input id="fArea" placeholder="مثلاً: نارمک"></div>
+        <div><label>نوع ملک</label><select id="fKind"><option>آپارتمان</option><option>ویلایی</option><option>زمین</option><option>مغازه</option><option>دفتر</option></select></div>
+        <div><label>متراژ</label><input id="fSize" type="number" placeholder="۸۰"></div>
+        <div><label>قیمت / رهن (تومان)</label><input id="fPrice" placeholder="۴,۵۰۰,۰۰۰,۰۰۰"></div>
+        <div><label>شماره مالک</label><input id="fOwnerPhone" inputmode="tel" placeholder="۰۹۱۲..."></div>
+        <div style="grid-column:1/-1">
+          <label>امکانات (برای تغییر کلیک کنید)</label>
+          <div class="feat" id="featBox">
+            <button type="button" onclick="toggleFeat('parking')">🚗 پارکینگ: <span id="fp-parking">✗</span></button>
+            <button type="button" onclick="toggleFeat('storage')">📦 انباری: <span id="fp-storage">✗</span></button>
+            <button type="button" onclick="toggleFeat('elevator')">🛗 آسانسور: <span id="fp-elevator">✗</span></button>
+          </div>
+        </div>
+        <div style="grid-column:1/-1"><label>توضیحات</label><textarea id="fNote" rows="2" placeholder="طبقه، وضعیت سند..."></textarea></div>
+      </div>
+      <button class="btn" onclick="addFile()">➕ ثبت فایل</button>
+    </div>
+    <input class="searchbar" id="fSearch" placeholder="🔍 جستجوی فایل..." oninput="renderFiles()">
+    <div id="fileList"></div>
+  </div>
+
+  <!-- پیگیری‌ها -->
+  <div id="tab-followups" style="display:none">
+    <div class="card">
+      <h2>📌 مشتری‌هایی که باید امروز یا قبلاً پیگیری کنید</h2>
+    </div>
+    <div id="followupList"></div>
+  </div>
+</div>
+
+<script>
+const store = {
+  get(k,d){ return JSON.parse(localStorage.getItem(k)) || d },
+  set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
+};
+let clients = store.get('h_clients',[]);
+let files   = store.get('h_files',[]);
+let feats = {parking:false, storage:false, elevator:false}; // وضعیت انتخابی فرم
+const fa = s => String(s).replace(/\d/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const toEn = s => String(s||'').replace(/[۰-۹]/g, d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[^\d+]/g,'');
+const telLink = (p) => p ? `<a class="phone" href="tel:${toEn(p)}">📞 ${fa(p)}</a>` : '📞 —';
+const today = () => new Date().toISOString().slice(0,10);
+document.getElementById('todayDate').textContent = 'امروز: ' + fa(new Date().toLocaleDateString('fa-IR'));
+
+const statusMap = {new:['مشتری جدید','b-new'], call:['تماس اولیه','b-call'], visit:['سر زدن / بازدید','b-visit'], deal:['در حال قرارداد','b-deal'], done:['تکمیل شد','b-done']};
+const featNames = {parking:'🚗 پارکینگ', storage:'📦 انباری', elevator:'🛗 آسانسور'};
+const featIcon = v => v ? '<span class="yes">✅</span>' : '<span class="no">❌</span>';
+
+function toggleFeat(k){
+  feats[k] = !feats[k];
+  const b = document.getElementById('fp-'+k);
+  b.textContent = feats[k] ? '✓' : '✗';
+  b.parentElement.className = feats[k] ? 'on' : 'off';
+}
+function fuState(d){ if(d===today()) return ['پیگیری برای امروز!','fu-today']; if(d<today()) return ['عقب‌افتاده — پیگیری فوری','fu-late']; return ['پیگیری در تاریخ '+fa(new Date(d).toLocaleDateString('fa-IR')),'fu-ok']; }
+
+function save(){ store.set('h_clients',clients); store.set('h_files',files); render(); }
+
+function addClient(){
+  const n=cName.value.trim(), p=cPhone.value.trim(), f=cFollowup.value;
+  if(!n||!p||!f) return alert('نام، شماره تماس و تاریخ پیگیری الزامی است.');
+  clients.unshift({name:n, phone:p, type:cType.value, budget:cBudget.value, area:cArea.value, status:cStatus.value, followup:f, note:cNote.value, created:today(), history:[]});
+  ['cName','cPhone','cBudget','cArea','cNote'].forEach(i=>document.getElementById(i).value='');
+  cFollowup.value=''; save();
+}
+function addFile(){
+  const t=fTitle.value.trim();
+  if(!t) return alert('عنوان فایل الزامی است.');
+  files.unshift({title:t, area:fArea.value, kind:fKind.value, size:fSize.value, price:fPrice.value, owner:fOwnerPhone.value, note:fNote.value, feats:{...feats}, created:today()});
+  ['fTitle','fArea','fSize','fPrice','fOwnerPhone','fNote'].forEach(i=>document.getElementById(i).value='');
+  Object.keys(feats).forEach(k=>{ feats[k]=false; const b=document.getElementById('fp-'+k); b.textContent='✗'; b.parentElement.className='off'; });
+  save();
+}
+function delClient(i){ if(confirm('حذف شود؟')){ clients.splice(i,1); save(); } }
+function delFile(i){ if(confirm('حذف شود؟')){ files.splice(i,1); save(); } }
+function doneClient(i){ clients[i].status='done'; save(); }
+function postpone(i,days){ const d=new Date(); d.setDate(d.getDate()+days); clients[i].followup=d.toISOString().slice(0,10); save(); }
+function logCall(i){ clients[i].history.push('تماس: '+fa(new Date().toLocaleDateString('fa-IR'))); save(); }
+function match(s,q){ return (s||'').toLowerCase().includes(q.toLowerCase()); }
+
+function renderClients(){
+  const q=cSearch.value.trim();
+  const list = clients.filter(c=>!q || match(c.name,q)||match(c.phone,q)||match(c.area,q)||match(c.budget,q));
+  clientList.innerHTML = list.length ? list.map((c,i)=>{
+    const [st,cl]=statusMap[c.status], [f,fc]=fuState(c.followup);
+    const hist=c.history&&c.history.length? '<br>🗓 تاریخچه: '+c.history.join(' ، '):'';
+    return `<div class="item"><div class="top"><h3>👤 ${c.name}</h3><span class="badge ${cl}">${st}</span></div>
+    <div class="meta">${telLink(c.phone)} | درخواست: ${c.type} | بودجه: ${fa(c.budget||'—')} | محله: ${fa(c.area||'—')}${c.note?'<br>📝 '+c.note:''}${hist}</div>
+    <div class="followup ${fc}">${f}</div>
+    <div style="margin-top:8px">
+      <a href="tel:${toEn(c.phone)}" style="text-decoration:none"><button class="btn gray" style="background:#0f766e;color:#fff">✆ تماس با مشتری</button></a>
+      <button class="btn gray" onclick="logCall(${i})">ثبت تماس</button>
+      <button class="btn gray" onclick="postpone(${i},2)">۲ روز بعد</button>
+      <button class="btn gray" onclick="postpone(${i},7)">هفته بعد</button>
+      <button class="btn gray" onclick="doneClient(${i})">✔ انجام شد</button>
+      <button class="btn red" onclick="delClient(${i})">🗑</button>
+    </div></div>`;
+  }).join('') : '<div class="empty">هنوز مشتری ثبت نشده است.</div>';
+}
+function renderFiles(){
+  const q=fSearch.value.trim();
+  const list = files.filter(f=>!q || match(f.title,q)||match(f.area,q)||match(f.price,q));
+  fileList.innerHTML = list.length ? list.map((f,i)=>{
+    const ft = f.feats||{};
+    const featHtml = '<div class="feat feat-view">' + Object.keys(featNames).map(k=>`<span>${featNames[k]}: ${featIcon(ft[k])}</span>`).join('') + '</div>';
+    return `<div class="item"><div class="top"><h3>🏠 ${f.title}</h3><span class="badge b-new">${f.kind}</span></div>
+    <div class="meta">📍 ${fa(f.area||'—')} | متراژ: ${fa(f.size||'—')} | قیمت: ${fa(f.price||'—')} | مالک: ${telLink(f.owner)}${f.note?'<br>📝 '+f.note:''}</div>
+    ${featHtml}
+    <div style="margin-top:8px">
+      <a href="tel:${toEn(f.owner)}" style="text-decoration:none"><button class="btn gray" style="background:#0f766e;color:#fff">✆ تماس با مالک</button></a>
+      <button class="btn red" onclick="delFile(${i})">🗑 حذف</button>
+    </div></div>`;
+  }).join('')
+    : '<div class="empty">هنوز فایلی ثبت نشده است.</div>';
+}
+function renderFollowups(){
+  const list = clients.filter(c=>c.status!=='done' && c.followup<=today())
+    .sort((a,b)=>a.followup<b.followup?-1:1);
+  followupList.innerHTML = list.length ? list.map(c=>{
+    const [f,fc]=fuState(c.followup);
+    return `<div class="item"><div class="top"><h3>👤 ${c.name}</h3><span class="followup ${fc}" style="margin:0">${f}</span></div>
+    <div class="meta">${telLink(c.phone)} | درخواست: ${c.type} | محله: ${fa(c.area||'—')}</div>
+    <div style="margin-top:8px"><a href="tel:${toEn(c.phone)}" style="text-decoration:none"><button class="btn gray" style="background:#0f766e;color:#fff">✆ تماس با مشتری</button></a></div></div>`;
+  }).join('') : '<div class="empty">🎉 همه مشتری‌های امروز پیگیری شدند!</div>';
+}
+function render(){
+  document.getElementById('stClients').textContent = fa(clients.filter(c=>c.status!=='done').length);
+  document.getElementById('stFiles').textContent = fa(files.length);
+  document.getElementById('stToday').textContent = fa(clients.filter(c=>c.status!=='done'&&c.followup===today()).length);
+  document.getElementById('stLate').textContent = fa(clients.filter(c=>c.status!=='done'&&c.followup<today()).length);
+  renderClients(); renderFiles(); renderFollowups();
+}
+function showTab(t,btn){
+  ['clients','files','followups'].forEach(x=>document.getElementById('tab-'+x).style.display = x===t?'block':'none');
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+render();
+</script>
+</body>
+</html>
